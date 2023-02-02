@@ -1,25 +1,31 @@
 using Entitas;
+using System.Collections.Generic;
 
-public class MoveSystem : IExecuteSystem, IInitializeSystem
+public class MoveSystem : ReactiveSystem<GameEntity>
 {
-    private IGroup<GameEntity> _group;
     private Contexts _contexts;
     private IPositionService _positionService;
 
     public MoveSystem(Contexts contexts, IPositionService positionService)
+        : base(contexts.game)
     {
         _contexts = contexts;
         _positionService = positionService;
     }
 
-    public void Initialize()
+    protected override ICollector<GameEntity> GetTrigger(IContext<GameEntity> context)
     {
-        _group = _contexts.game.GetGroup(GameMatcher.Move);
+        return _contexts.game.CreateCollector(GameMatcher.Move);
     }
 
-    public void Execute()
+    protected override bool Filter(GameEntity entity)
     {
-        foreach (var entity in _group)
+        return entity.hasMove;
+    }
+
+    protected override void Execute(List<GameEntity> entities)
+    {
+        foreach (var entity in entities)
         {
             entity.ReplaceMove(_positionService.Position);
         }
